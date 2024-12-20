@@ -1,0 +1,86 @@
+defaults:
+  - hydra/job_logging: colorlog
+  - hydra/hydra_logging: colorlog
+  - feature: base
+
+workdir: ${store.workdir}
+seed: 777
+debug: False
+version: ${feature.version}
+
+data:
+  train_path: ${store.workdir}/input/v1/train.csv
+  test_path: ${store.workdir}/input/v1/test.csv
+
+lgbm:
+  n_fold: 4
+  feature_cols: ${feature.feature_cols}
+  cat_cols: ${feature.cat_cols}
+  label_col: ${feature.label_col}
+  pred_col: ${feature.pred_col}
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  params:
+    num_iterations: 100000
+    lambda_l1: 0.1
+    lambda_l2: 0.1
+    num_leaves: 256
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    min_child_samples: 10
+    task: train
+    boosting_type: gbdt
+    objective: rmse
+    metric: rmse
+    max_depth: 8
+    learning_rate: 0.01
+    num_thread: -1
+    max_bin: 256
+    verbose: -1
+    device: cpu
+    scale_pos_weight: 1
+    seed: ${seed}
+    num_class: 1
+
+xgb:
+  feature_cols: ${feature.feature_cols}
+  cat_cols: ${feature.cat_cols}
+  label_col: ${feature.label_col}
+  pred_col: ${feature.pred_col}
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  params:
+    alpha: 0.1
+    reg_lambda: 0.1
+    max_leaves: 16
+    colsample_bytree: 1.0
+    subsample: 0.8
+    min_child_weight: 10
+    booster: gbtree
+    objective: binary:logistic
+    eval_metric: auc
+    max_depth: 6
+    learning_rate: 0.01
+    nthread: -1
+    max_bin: 256
+    tree_method: gpu_hist
+    scale_pos_weight: 1
+    seed: ${seed}
+    linear_tree: True
+
+store:
+  workdir: /root/workdir
+  model_name: lgbm_${version}
+  root_path: ${store.workdir}/output/${store.model_name}
+  save_path: ${store.workdir}/output/${store.model_name}
+  model_path: ${store.workdir}/output/${store.model_name}/model
+  log_path: ${store.workdir}/output/${store.model_name}/logs
+  result_path: ${store.workdir}/output/${store.model_name}/result
+  gcs_path: kaggledays_delhi/shimacos/${store.model_name}
+  gcs_project: dena-ai-training-29-gcp
+  bucket_name: kaggledays_championship
+
+hydra:
+  run:
+    dir: ${store.save_path}

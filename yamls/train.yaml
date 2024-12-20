@@ -1,0 +1,92 @@
+runner: ClassificationRunner
+debug: False
+version: 001_baseline
+model_class: LGBMModels
+base_soutput_dir: ./output/train/${train.version}
+output_dir: ./output/train/${train.version}/fold${train.data.n_fold}
+seed: 777
+
+base:
+  loss_class: nn.MAELoss
+  scheduler: linear_warmup
+  opt_class: AdamW
+  use_scheduler_free: False
+  use_scheduler: True
+  lr: 0.001
+
+data:
+  dataset_class: MotionDataset
+  do_standarize: False
+  train_batch_size: 16
+  test_batch_size: 32
+  remove_cols: ["ID", "scene_id", "scene_second", "fold", "trajectory"]
+  cat_cols: ["gearShifter"]
+  train_path: ${preprocess.output_dir}/train.parquet
+  test_path: ${preprocess.output_dir}/test.parquet
+  id_col: ID
+  label_col: trajectory
+  pred_col: ${data.label_col}_pred
+  image_model: ${train.model.image_model}
+  n_fold: 0
+  image_width: 224
+  image_height: 224
+  use_mask: False
+  use_depth: False
+
+model:
+  model_class: MotionTransformer
+  num_feature: # code内で補完
+  encoder_num_layers: 4
+  encoder_num_heads: 8 # Transformer用
+  decoder_num_layers: 4
+  decoder_num_heads: 8 # Transformer用
+  hidden_size: 512
+  dropout_rate: 0.2
+  image_model: resnet34
+  num_classes: 3
+  in_channels: 9
+  seq_len: 6
+  use_teacher_forcing: False
+  use_scheduler_sampling: False
+
+loss:
+  loss_class: MAELoss
+
+wandb_logger:
+  _target_: pytorch_lightning.loggers.WandbLogger
+  name: ${train.version}_fold${train.data.n_fold}
+  project: atma-18
+  group: ${train.version}
+  entity:
+  save_dir: ${train.output_dir}/logs
+
+# pytorch_lightningの設定
+# callbacks
+checkpoint_callback:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: ${train.output_dir}
+  filename: model
+  monitor: val_loss
+  save_top_k: 1
+  save_weights_only: True
+  mode: min
+  verbose: True
+
+lr_callback:
+  _target_: pytorch_lightning.callbacks.LearningRateMonitor
+  logging_interval: step
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  max_epochs: 20
+  deterministic: True
+  accelerator: gpu
+  devices: 1
+  precision: 16
+  accumulate_grad_batches: 1
+  sync_batchnorm: True
+  benchmark: True
+  logger: ${train.wandb_logger} # or ${train.csv_logger} or ${train.tensor_board_logger}
+  callbacks:
+    - ${train.checkpoint_callback}
+    - ${train.lr_callback}

@@ -1,0 +1,85 @@
+seed: 777
+debug: False
+version: exp006_lgbm_baseline
+output_dir: ./output/gbdt/${gbdt.version}
+remove_cols: ["ID", "scene_id", "scene_second", "fold", "trajectory"]
+
+data:
+  train_path: ${preprocess.output_dir}/train.parquet
+  test_path: ${preprocess.output_dir}/test.parquet
+  use_pred_feature: False
+
+lgbm:
+  n_fold: 5
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  params:
+    num_iterations: 100000
+    lambda_l1: 0.1
+    lambda_l2: 0.1
+    num_leaves: 32
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    min_child_samples: 10
+    task: train
+    boosting_type: gbdt
+    objective: mae
+    metric: mae
+    max_depth: 12
+    learning_rate: 0.1
+    num_thread: -1
+    max_bin: 256
+    verbose: -1
+    device: cpu
+    scale_pos_weight: 1
+    seed: ${gbdt.seed}
+    num_class: 1
+
+catboost:
+  n_fold: 5
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  categorical_features_indices:
+  params:
+    task_type: GPU
+    iterations: 100000
+    # max_leaves: 32
+    # subsample: 0.8
+    loss_function: MAE
+    eval_metric: MAE
+    max_depth: 8
+    learning_rate: 0.1
+    max_bin: 256
+    verbose: -1
+    devices: "0"
+    od_type: Iter
+    od_wait: Iter
+    random_seed: ${gbdt.seed}
+    # bootstrap_type: Poisson
+
+xgb:
+  feature_cols: ${feature.feature_cols}
+  cat_cols: ${feature.cat_cols}
+  label_col: ${feature.label_col}
+  pred_col: ${feature.pred_col}
+  early_stopping_rounds: 200
+  verbose_eval: 100
+  params:
+    alpha: 0.1
+    reg_lambda: 0.1
+    max_leaves: 16
+    colsample_bytree: 1.0
+    subsample: 0.8
+    min_child_weight: 10
+    booster: gbtree
+    objective: reg:absoluteerror
+    eval_metric: mae
+    max_depth: 6
+    learning_rate: 0.1
+    nthread: -1
+    max_bin: 256
+    tree_method: hist
+    scale_pos_weight: 1
+    seed: ${gbdt.seed}
+    linear_tree: True

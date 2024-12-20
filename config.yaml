@@ -1,0 +1,18 @@
+defaults:
+  - _self_
+  - yamls@preprocess: preprocess
+  - yamls@train: train
+  - yamls@gbdt: gbdt
+  - yamls@stacking: stacking
+  - yamls@postprocess: postprocess
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+hydra:
+  job:
+    chdir: False
+  run:
+    dir: ${train.output_dir}
+  sweep:
+    dir: ${train.output_dir}
+    subdir: log

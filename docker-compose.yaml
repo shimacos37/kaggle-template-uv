@@ -1,0 +1,21 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: kaggle
+    network_mode: bridge
+    init: true
+    working_dir: /root/app
+    shm_size: 64gb
+    runtime: nvidia
+    volumes:
+      - $PWD:/root/app/
+      - $HOME/.config:/root/.config
+      - $HOME/.cache:/root/.cache
+      - $HOME/.netrc:/root/.netrc
+      - $HOME/.kaggle:/root/.kaggle
+    environment:
+      - SLURM_LOCALID=0
+      - HYDRA_FULL_ERROR=1
+      - PWD=/root/app

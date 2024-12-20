@@ -1,0 +1,44 @@
+seed: 777
+debug: False
+version: exp014_exp010_exp011_stacking
+output_dir: ./output/stacking/${stacking.version}
+remove_cols:
+  [
+    "ID",
+    "scene_id",
+    "scene_second",
+    "fold",
+    "trajectory",
+    "x_0",
+    "y_0",
+    "z_0",
+    "x_1",
+    "y_1",
+    "z_1",
+    "x_2",
+    "y_2",
+    "z_2",
+    "x_3",
+    "y_3",
+    "z_3",
+    "x_4",
+    "y_4",
+    "z_4",
+    "x_5",
+    "y_5",
+    "z_5",
+  ]
+use_only_preds: False
+use_pred_feature_creator: False
+use_calib_label: False
+use_pseudo_label: False
+pseudo_model: exp054_stacking_lgbm
+
+data:
+  train_path: ${preprocess.output_dir}/train.parquet
+  test_path: ${preprocess.output_dir}/test.parquet
+  use_pred_feature: False
+
+models:
+  gbdt: ["exp009_lgbm_add_scene_features"]
+  nn: ["exp010_007_add_features_fix"]
